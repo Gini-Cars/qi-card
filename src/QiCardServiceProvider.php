@@ -19,7 +19,7 @@ class QiCardServiceProvider extends PackageServiceProvider
             ->name('qi-card')
             ->hasConfigFile()
             ->hasViews()
-            ->hasMigration('create_qi_card_table')
+            ->hasMigrations('create_qi_card_users_table')
             ->hasCommand(QiCardCommand::class);
     }
 }

@@ -1,11 +1,8 @@
 # This is a laravel package that provide all the functionality that you need to integrate your app with Qi card api (payments, notifications, authentications)
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/ht3aa/qi-card.svg?style=flat-square)](https://packagist.org/packages/ht3aa/qi-card)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/ht3aa/qi-card/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/ht3aa/qi-card/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/ht3aa/qi-card/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/ht3aa/qi-card/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/ht3aa/qi-card.svg?style=flat-square)](https://packagist.org/packages/ht3aa/qi-card)
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
 
 ## Support us
 
@@ -50,6 +47,12 @@ php artisan vendor:publish --tag="qi-card-views"
 ```
 
 ## Usage
+This package handle the authentcation part for your app. It will create for you a tables that hold all the users data of the qi card. In the `config/qi-card.php` config file you can specifiy which Qi card user data should be stored in your app. you should check your mini app scopes to know which information you are getting from the qi card. You can map the same scopes that is used in the mini app by enabling them in the `config/qi-card.php`.
+
+```php
+
+```
+
 
 ```php
 $qiCard = new Ht3aa\QiCard();
