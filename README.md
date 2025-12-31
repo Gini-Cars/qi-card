@@ -245,7 +245,7 @@ $maskedCardNo = $user->first_card_masked_card_no; // Returns masked card number 
 | `first_card_account_number` | `string` or `null` | Account number of first card |
 | `first_card_masked_card_no` | `string` or `null` | Masked card number of first card |
 
-### Sending Notifications
+### Sending Super Qi Notifications App
 
 The package provides a convenient way to send notifications to users' Qi Card inbox.
 
