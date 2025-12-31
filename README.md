@@ -176,7 +176,7 @@ The `createUser` method will:
 
 ### Working with QiCardUser Model
 
-The `QiCardUser` model provides access to user data:
+The `QiCardUser` model provides access to user data through convenient accessors:
 
 ```php
 use Ht3aa\QiCard\QiCardUser;
@@ -184,16 +184,66 @@ use Ht3aa\QiCard\QiCardUser;
 // Find a user
 $user = QiCardUser::where('qi_card_id', $qiCardId)->first();
 
-// Access user information
+// Access raw data
 $userInfo = $user->user_info; // Array of user information
 $cardList = $user->card_list; // Array of cards (if enabled)
 $accessToken = $user->qi_card_access_token; // Access token
-
-// Access specific user info fields
-$userId = $user->user_info['userId'] ?? null;
-$nickname = $user->user_info['nickname'] ?? null;
-$avatar = $user->user_info['avatar'] ?? null;
 ```
+
+#### User Information Accessors
+
+The model provides convenient accessors for accessing user information:
+
+```php
+// Basic user information
+$gender = $user->gender; // Returns gender (M/F)
+$nationality = $user->nationality; // Returns nationality code (e.g., "IRQ")
+$avatar = $user->avatar; // Returns avatar path/URL
+
+// Avatar with temporary S3 URL (if stored in S3)
+$avatarUrl = $user->avatar_temporary_s3_url; // Returns temporary S3 URL (5 minutes expiry)
+
+// User names
+$userName = $user->user_name; // Returns full name in English (e.g., "HASAN TAHSIN ABDULRIDHA AL KAABI")
+$userNameInArabic = $user->user_info_user_name_in_arabic; // Returns full name in Arabic
+
+// Contact information
+$contactInfos = $user->contact_infos; // Returns array of contact information
+$mobilePhone = $user->mobile_phone_number; // Returns formatted mobile phone (e.g., "+9647708246418")
+$email = $user->email; // Returns email address if available
+```
+
+#### Card List Accessors
+
+Access card information with these accessors:
+
+```php
+// Card list
+$cardList = $user->card_list; // Returns array of all cards
+
+// First card information
+$firstCard = $user->first_card; // Returns first card object
+$accountNumber = $user->first_card_account_number; // Returns account number (e.g., "5862997060")
+$maskedCardNo = $user->first_card_masked_card_no; // Returns masked card number (e.g., "417763******4382")
+```
+
+#### Accessor Reference
+
+| Accessor | Returns | Description |
+|---------|---------|-------------|
+| `gender` | `string` or `null` | User's gender (M/F) |
+| `avatar` | `string` or `null` | Avatar path or URL |
+| `avatar_temporary_s3_url` | `string` or `null` | Temporary S3 URL for avatar (5 min expiry) |
+| `nationality` | `string` or `null` | Nationality code |
+| `user_name` | `string` or `null` | Full name in English |
+| `user_info_user_name_in_arabic` | `string` or `null` | Full name in Arabic |
+| `contact_infos` | `array` or `null` | Array of contact information |
+| `mobile_phone_number` | `string` or `null` | Formatted mobile phone number with + prefix |
+| `email` | `string` or `null` | Email address if available |
+| `card_list` | `array` or `null` | Array of all cards |
+| `first_card` | `array` or `null` | First card object |
+| `first_card_account_number` | `string` or `null` | Account number of first card |
+| `first_card_masked_card_no` | `string` or `null` | Masked card number of first card |
 
 ### Sending Notifications
 
