@@ -4,6 +4,7 @@ namespace Ht3aa\QiCard;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class QiCardUser extends Model
 {

@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Notifications;
+namespace Ht3aa\QiCard\Notifications;
 
+use Ht3aa\QiCard\Notifications\Channels\SuperQiInboxChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
-class SuperQiNotification extends Notification
+class SuperQiInboxNotification extends Notification
 {
     use Queueable;
 
@@ -13,13 +14,16 @@ class SuperQiNotification extends Notification
 
     public string $title;
 
+    public ?string $url = null;
+
     /**
      * Create a new notification instance.
      */
-    public function __construct(string $title, string $message)
+    public function __construct(string $title, string $message, ?string $url = null)
     {
         $this->message = $message;
         $this->title = $title;
+        $this->url = $url;
     }
 
     /**
@@ -29,15 +33,15 @@ class SuperQiNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return [SuperQiChannel::class];
+        return [SuperQiInboxChannel::class];
     }
 
     /**
      * Get the mail representation of the notification.
      */
-    public function toSuperQi(object $notifiable): SuperQiChannel
+    public function toSuperQi(object $notifiable): SuperQiInboxChannel
     {
-        return new SuperQiChannel($this->title, $this->message);
+        return new SuperQiInboxChannel($this->title, $this->message, $this->url);
     }
 
     /**

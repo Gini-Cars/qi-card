@@ -58,13 +58,27 @@ class QiCard
             $this->updateAvatarUrlToS3($userInfo);
         }
 
+        $user = QiCardUser::where('qi_card_id', $userInfo['userId'])->first();
 
-        return QiCardUser::create([
-            'qi_card_id' => $userInfo['userId'],
-            'qi_card_access_token' => $response['accessToken'],
-            'user_info' => $userInfo,
-            'card_list' => $cardList,
-        ]);
+        if (! $user) {
+            return QiCardUser::create([
+                'qi_card_id' => $userInfo['userId'],
+                'qi_card_access_token' => $response['accessToken'],
+                'user_info' => $userInfo,
+                'card_list' => $cardList,
+            ]);
+        }
+
+
+        if (config('qi-card.update_user_data_every_login')) {
+            $user->update([
+                'qi_card_access_token' => $response['accessToken'],
+                'user_info' => $userInfo,
+                'card_list' => $cardList,
+            ]);
+        }
+
+        return $user;
     }
 
     private function fetchAccountNumbers(string $token): array
@@ -101,6 +115,37 @@ class QiCard
         }
 
         return $response['userInfo'];
+    }
+
+    public function sendSuperQiInboxNotification($accessToken, $title, $content, $url = '')
+    {
+        $url = '/v1/messages/sendInbox';
+
+        $params = [
+            'accessToken' => $accessToken,
+            'requestId' => Str::uuid()->toString(),
+            'templateCode' => 'MINI_APP_COMMON_INBOX',
+            'templates' => [
+                [
+                    'templateParameters' => [
+                        'Title' => $title,
+                        'Content' => $content,
+                        'Url' => $url,
+                    ],
+                ],
+            ],
+        ];
+
+        $headers = $this->buildHeaders('POST', $url, $params);
+
+        $response = $this->qiCardHttpRequest->replaceHeaders($headers)->post($url, $params)->json();
+
+        if ($this->requestFailed($response)) {
+            Log::error('send super qi notification failed: ' . json_encode($response));
+            throw new UnprocessableEntityHttpException('Request failed try again later');
+        }
+
+        return $response;
     }
 
     private function updateAvatarUrlToS3(array $userInfo): void

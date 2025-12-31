@@ -20,6 +20,8 @@ return [
     "store_avatar_url_in_s3_storage" => false,
 
 
+    "update_user_data_every_login" => false,
+
     /**
      * This is the configuration for the Qi card api.
      * You can change the configuration by setting the values in the .env file.
