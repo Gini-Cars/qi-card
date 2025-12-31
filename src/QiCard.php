@@ -39,7 +39,7 @@ class QiCard
         $response = $this->qiCardHttpRequest->replaceHeaders($headers)->post($url, $params)->json();
 
         if ($this->requestFailed($response)) {
-            Log::error('response failed: '.json_encode($response));
+            Log::error('response failed: ' . json_encode($response));
             throw new UnprocessableEntityHttpException('qi card response failed try again later');
         }
 
@@ -52,7 +52,7 @@ class QiCard
         }
 
         if (config('qi-card.store_avatar_url_in_s3_storage')) {
-            $this->updateAvatarUrlToS3($userInfo);
+            $userInfo['avatar'] = $this->updateAvatarUrlToS3($userInfo['avatar']);
         }
 
         $user = QiCardUser::where('qi_card_id', $userInfo['userId'])->first();
@@ -88,7 +88,7 @@ class QiCard
         $response = $this->qiCardHttpRequest->replaceHeaders($headers)->post($url, $params)->json();
 
         if (! isset($response['cardList']) || ! is_array($response['cardList']) || $this->requestFailed($response)) {
-            Log::error('fetch account numbers failed: '.json_encode($response));
+            Log::error('fetch account numbers failed: ' . json_encode($response));
             throw new UnprocessableEntityHttpException('Request failed try again later');
         }
 
@@ -106,7 +106,7 @@ class QiCard
         $response = $this->qiCardHttpRequest->replaceHeaders($headers)->post($url, $params)->json();
 
         if ($this->requestFailed($response)) {
-            Log::error('fetch user info failed: '.json_encode($response));
+            Log::error('fetch user info failed: ' . json_encode($response));
             throw new UnprocessableEntityHttpException('Request failed try again later');
         }
 
@@ -137,26 +137,24 @@ class QiCard
         $response = $this->qiCardHttpRequest->replaceHeaders($headers)->post($url, $params)->json();
 
         if ($this->requestFailed($response)) {
-            Log::error('send super qi notification failed: '.json_encode($response));
+            Log::error('send super qi notification failed: ' . json_encode($response));
             throw new UnprocessableEntityHttpException('Request failed try again later');
         }
 
         return $response;
     }
 
-    private function updateAvatarUrlToS3(array $userInfo): void
+    private function updateAvatarUrlToS3(string $avatarUrl): string
     {
-        $avatarUrl = $userInfo['avatar'];
-
         if (! $avatarUrl) {
             throw new Exception('Avatar url is not found in the user info of qi card information. please make sure you have added the USER_AVATAR scope in the mini app and enable the store_avatar_url_in_s3_storage option in the config file.');
         }
 
-        $fullPath = 'qi-card-user-avatars/'.Str::uuid()->toString().'.jpeg';
+        $fullPath = 'qi-card-user-avatars/' . Str::uuid()->toString() . '.jpeg';
 
         Storage::disk('s3')->put($fullPath, file_get_contents($avatarUrl));
 
-        $userInfo['avatar'] = $fullPath;
+        return $fullPath;
     }
 
     private function requestFailed(?array $response): bool
@@ -195,14 +193,14 @@ class QiCard
             'Content-Type' => 'application/json; charset=UTF-8',
             'Client-Id' => $this->clientId,
             'Request-Time' => $currentTimestamp,
-            'Signature' => 'algorithm=RSA256, keyVersion=1, signature='.($signature),
+            'Signature' => 'algorithm=RSA256, keyVersion=1, signature=' . ($signature),
             'Accept' => 'application/json',
         ];
     }
 
     private function generateSignature(string $httpMethod, string $path, string $reqTime, string $content): string
     {
-        $signContent = $httpMethod.' '.$path."\n".$this->clientId.'.'.$reqTime.'.'.$content;
+        $signContent = $httpMethod . ' ' . $path . "\n" . $this->clientId . '.' . $reqTime . '.' . $content;
 
         openssl_sign($signContent, $signature, $this->privateKey, OPENSSL_ALGO_SHA256);
 
