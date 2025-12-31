@@ -2,9 +2,9 @@
 
 namespace Ht3aa\QiCard\Tests;
 
+use Ht3aa\QiCard\QiCardServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Ht3aa\QiCard\QiCardServiceProvider;
 
 class TestCase extends Orchestra
 {

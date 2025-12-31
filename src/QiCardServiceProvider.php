@@ -2,9 +2,9 @@
 
 namespace Ht3aa\QiCard;
 
+use Ht3aa\QiCard\Commands\QiCardCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Ht3aa\QiCard\Commands\QiCardCommand;
 
 class QiCardServiceProvider extends PackageServiceProvider
 {
