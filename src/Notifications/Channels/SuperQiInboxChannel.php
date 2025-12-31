@@ -2,9 +2,9 @@
 
 namespace Ht3aa\QiCard\Notifications\Channels;
 
+use Ht3aa\QiCard\Facades\QiCard;
 use Ht3aa\QiCard\Notifications\SuperQiInboxNotification;
 use Illuminate\Notifications\Notification;
-use Ht3aa\QiCard\Facades\QiCard;
 use Illuminate\Support\Facades\Log;
 
 class SuperQiInboxChannel
@@ -17,7 +17,7 @@ class SuperQiInboxChannel
         try {
             QiCard::sendSuperQiInboxNotification($notifiable->qi_card_access_token, $notification->title, $notification->message, $notification->url);
         } catch (\Exception $e) {
-            Log::error('send super qi inbox notification failed: ' . $e->getMessage());
+            Log::error('send super qi inbox notification failed: '.$e->getMessage());
         }
     }
 }

@@ -2,20 +2,19 @@
 
 namespace Ht3aa\QiCard;
 
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
-use Carbon\Carbon;
-use GuzzleHttp\Client;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class QiCard
 {
     private PendingRequest $qiCardHttpRequest;
+
     private string $clientId;
 
     private string $privateKey;
@@ -36,15 +35,13 @@ class QiCard
             'authCode' => $authCode,
         ];
 
-
         $headers = $this->buildHeaders('POST', $url, $params);
         $response = $this->qiCardHttpRequest->replaceHeaders($headers)->post($url, $params)->json();
 
         if ($this->requestFailed($response)) {
-            Log::error('response failed: ' . json_encode($response));
+            Log::error('response failed: '.json_encode($response));
             throw new UnprocessableEntityHttpException('qi card response failed try again later');
         }
-
 
         if (config('qi-card.user_info_scopes_enabled')) {
             $userInfo = $this->fetchUserInfo($response['accessToken']);
@@ -69,7 +66,6 @@ class QiCard
             ]);
         }
 
-
         if (config('qi-card.update_user_data_every_login')) {
             $user->update([
                 'qi_card_access_token' => $response['accessToken'],
@@ -92,7 +88,7 @@ class QiCard
         $response = $this->qiCardHttpRequest->replaceHeaders($headers)->post($url, $params)->json();
 
         if (! isset($response['cardList']) || ! is_array($response['cardList']) || $this->requestFailed($response)) {
-            Log::error('fetch account numbers failed: ' . json_encode($response));
+            Log::error('fetch account numbers failed: '.json_encode($response));
             throw new UnprocessableEntityHttpException('Request failed try again later');
         }
 
@@ -110,7 +106,7 @@ class QiCard
         $response = $this->qiCardHttpRequest->replaceHeaders($headers)->post($url, $params)->json();
 
         if ($this->requestFailed($response)) {
-            Log::error('fetch user info failed: ' . json_encode($response));
+            Log::error('fetch user info failed: '.json_encode($response));
             throw new UnprocessableEntityHttpException('Request failed try again later');
         }
 
@@ -141,7 +137,7 @@ class QiCard
         $response = $this->qiCardHttpRequest->replaceHeaders($headers)->post($url, $params)->json();
 
         if ($this->requestFailed($response)) {
-            Log::error('send super qi notification failed: ' . json_encode($response));
+            Log::error('send super qi notification failed: '.json_encode($response));
             throw new UnprocessableEntityHttpException('Request failed try again later');
         }
 
@@ -156,7 +152,7 @@ class QiCard
             throw new Exception('Avatar url is not found in the user info of qi card information. please make sure you have added the USER_AVATAR scope in the mini app and enable the store_avatar_url_in_s3_storage option in the config file.');
         }
 
-        $fullPath = 'qi-card-user-avatars/' . Str::uuid()->toString() . '.jpeg';
+        $fullPath = 'qi-card-user-avatars/'.Str::uuid()->toString().'.jpeg';
 
         Storage::disk('s3')->put($fullPath, file_get_contents($avatarUrl));
 
@@ -199,14 +195,14 @@ class QiCard
             'Content-Type' => 'application/json; charset=UTF-8',
             'Client-Id' => $this->clientId,
             'Request-Time' => $currentTimestamp,
-            'Signature' => 'algorithm=RSA256, keyVersion=1, signature=' . ($signature),
+            'Signature' => 'algorithm=RSA256, keyVersion=1, signature='.($signature),
             'Accept' => 'application/json',
         ];
     }
 
     private function generateSignature(string $httpMethod, string $path, string $reqTime, string $content): string
     {
-        $signContent = $httpMethod . ' ' . $path . "\n" . $this->clientId . '.' . $reqTime . '.' . $content;
+        $signContent = $httpMethod.' '.$path."\n".$this->clientId.'.'.$reqTime.'.'.$content;
 
         openssl_sign($signContent, $signature, $this->privateKey, OPENSSL_ALGO_SHA256);
 
