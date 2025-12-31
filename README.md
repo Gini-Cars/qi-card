@@ -3,6 +3,8 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/ht3aa/qi-card.svg?style=flat-square)](https://packagist.org/packages/ht3aa/qi-card)
 [![Total Downloads](https://img.shields.io/packagist/dt/ht3aa/qi-card.svg?style=flat-square)](https://packagist.org/packages/ht3aa/qi-card)
 
+![Qi Card Integration For Laravel](image.png)
+
 A comprehensive Laravel package that provides all the functionality you need to integrate your application with the Qi Card API, including payments, notifications, and user authentication.
 
 ## Features
@@ -19,8 +21,15 @@ A comprehensive Laravel package that provides all the functionality you need to 
 
 - PHP ^8.4
 - Laravel ^11.0 || ^12.0
+- Laravel Sanctum (required for API token authentication)
 
 ## Installation
+
+### Install Laravel Sanctum
+
+This package requires Laravel Sanctum to be installed. Please follow the [Laravel Sanctum installation guide](https://laravel.com/docs/12.x/sanctum) to install and configure Sanctum in your Laravel application.
+
+### Install Qi Card Package
 
 You can install the package via Composer:
 
