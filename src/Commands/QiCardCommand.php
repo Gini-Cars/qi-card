@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace Ht3aa\QiCard\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class QiCardCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'qi-card';
 
     public $description = 'My command';
 

@@ -1,17 +1,17 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "ht3aa/qi-card",
+    "description": "This is a laravel package that provide all the functionality that you need to integrate your app with Qi card api (payments, notifications, authentications)",
     "keywords": [
-        ":vendor_name",
+        "ht3aa",
         "laravel",
-        ":package_slug"
+        "qi-card"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/ht3aa/qi-card",
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "Hasan Tahseen",
+            "email": "ht3aa2001@gmail.com",
             "role": "Developer"
         }
     ],
@@ -35,13 +35,13 @@
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "Ht3aa\\QiCard\\": "src/",
+            "Ht3aa\\QiCard\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/",
+            "Ht3aa\\QiCard\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
@@ -63,10 +63,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "Ht3aa\\QiCard\\QiCardServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "QiCard": "Ht3aa\\QiCard\\Facades\\QiCard"
             }
         }
     },
