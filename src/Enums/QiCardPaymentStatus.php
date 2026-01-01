@@ -4,7 +4,6 @@ namespace Ht3aa\QiCard\Enums;
 
 enum QiCardPaymentStatus: string
 {
-
     /**
      * SUCCESS => نجح
      */

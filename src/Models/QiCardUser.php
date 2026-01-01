@@ -45,28 +45,28 @@ class QiCardUser extends Authenticatable
     public function gender(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->user_info['gender'] ?? null,
+            get: fn () => $this->user_info['gender'] ?? null,
         );
     }
 
     public function avatar(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->user_info['avatar'] ?? null,
+            get: fn () => $this->user_info['avatar'] ?? null,
         );
     }
 
     public function avatarTemporaryS3Url(): Attribute
     {
         return Attribute::make(
-            get: fn() => Storage::disk('s3')->temporaryUrl($this->user_info['avatar'], now()->addMinutes(5)) ?? null,
+            get: fn () => Storage::disk('s3')->temporaryUrl($this->user_info['avatar'], now()->addMinutes(5)) ?? null,
         );
     }
 
     public function nationality(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->user_info['nationality'] ?? null,
+            get: fn () => $this->user_info['nationality'] ?? null,
         );
     }
 
@@ -101,7 +101,7 @@ class QiCardUser extends Authenticatable
     public function contactInfos(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->user_info['contactInfos'] ?? null,
+            get: fn () => $this->user_info['contactInfos'] ?? null,
         );
     }
 
@@ -118,7 +118,7 @@ class QiCardUser extends Authenticatable
                         $phone = str_replace('-', '', $contactInfo['contactNo']);
 
                         if (! str_starts_with($phone, '+')) {
-                            $phone = '+' . $phone;
+                            $phone = '+'.$phone;
                         }
 
                         return $phone;
@@ -152,28 +152,28 @@ class QiCardUser extends Authenticatable
     public function cardList(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->card_list ?? null,
+            get: fn () => $this->card_list ?? null,
         );
     }
 
     public function firstCard(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->card_list[0] ?? null,
+            get: fn () => $this->card_list[0] ?? null,
         );
     }
 
     public function firstCardAccountNumber(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->card_list[0]['accountNumber'] ?? null,
+            get: fn () => $this->card_list[0]['accountNumber'] ?? null,
         );
     }
 
     public function firstCardMaskedCardNo(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->card_list[0]['maskedCardNo'] ?? null,
+            get: fn () => $this->card_list[0]['maskedCardNo'] ?? null,
         );
     }
 }
