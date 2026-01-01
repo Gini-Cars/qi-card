@@ -2,6 +2,10 @@
 
 All notable changes to `qi-card` will be documented in this file.
 
+## v0.0.2 - 2026-01-01
+
+**Full Changelog**: https://github.com/Gini-Cars/qi-card/compare/v0.0.1...v0.0.2
+
 ## v0.0.1 - 2026-01-01
 
 ### What's Changed
