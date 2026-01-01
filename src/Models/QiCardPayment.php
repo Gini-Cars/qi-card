@@ -2,12 +2,8 @@
 
 namespace Ht3aa\QiCard\Models;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Storage;
-use Laravel\Sanctum\HasApiTokens;
 
 class QiCardPayment extends Model
 {
