@@ -12,6 +12,7 @@ A comprehensive Laravel package that provides all the functionality you need to 
 - 🔐 **User Authentication**: Seamlessly authenticate users via Qi Card authorization codes
 - 📊 **User Information Management**: Store and manage user information from Qi Card with configurable scopes
 - 💳 **Card List Management**: Optional storage and management of user card lists
+- 💰 **Payment Processing**: Create and manage payments with webhook support and polymorphic product relationships
 - 📬 **Inbox Notifications**: Send notifications directly to users' Qi Card inbox
 - 🖼️ **Avatar Management**: Optional S3 storage for user avatars
 - 🔄 **Automatic Updates**: Configurable user data updates on each login
@@ -49,19 +50,34 @@ This will create a `config/qi-card.php` file in your config directory.
 
 ### Publish and Run Migrations
 
-Publish and run the migrations to create the `qi_card_users` table:
+Publish and run the migrations to create the `qi_card_users` and `qi_card_payments` tables:
 
 ```bash
 php artisan vendor:publish --tag="qi-card-migrations"
 php artisan migrate
 ```
 
-The migration creates a table with the following structure:
+The migrations create the following tables:
+
+#### `qi_card_users` table:
 - `id`: Primary key
-- `wallted_id`: Unique identifier for the Qi Card user
+- `wallet_id`: Unique identifier for the Qi Card user
 - `user_info`: JSON field storing user information
 - `card_list`: JSON field storing user card list (optional)
 - `qi_card_access_token`: Access token for API calls
+- `timestamps`: Created and updated timestamps
+
+#### `qi_card_payments` table:
+- `id`: Primary key
+- `payment_request_id`: Unique payment request identifier
+- `payment_id`: Payment ID from Qi Card API (nullable)
+- `amount`: Payment amount (decimal)
+- `order_description`: Description of the order
+- `redirect_url`: URL to redirect user for payment
+- `product_type`: Polymorphic product type
+- `product_id`: Polymorphic product ID
+- `qi_card_user_id`: Foreign key to `qi_card_users` table
+- `status`: Payment status (default: "PROCESSING")
 - `timestamps`: Created and updated timestamps
 
 ### Publish Views (Optional)
@@ -83,9 +99,14 @@ QI_CARD_API_BASE_URL=https://api.qi-card.com
 QI_CARD_API_CLIENT_ID=your_client_id_here
 QI_CARD_API_PRIVATE_KEY=your_private_key_here
 QI_CARD_API_PUBLIC_KEY=your_public_key_here
+
+# Payment configuration (optional)
+QI_CARD_PAYMENT_PRODUCT_CODE=your_product_code_here
+QI_CARD_PAYMENT_WEBHOOK_URL=https://your-app.com/api/v1/qi-card/payments/webhook
+QI_CARD_PAYMENT_CUSTOM_WEBHOOK_URL=https://your-custom-webhook-url.com
 ```
 
-> **Note**: Contact the Qi Card team to obtain your `CLIENT_ID` and `PRIVATE_KEY`. These are required for the package to function properly.
+> **Note**: Contact the Qi Card team to obtain your `CLIENT_ID`, `PRIVATE_KEY`, and `PAYMENT_PRODUCT_CODE`. These are required for the package to function properly.
 
 ### Configuration File
 
@@ -113,6 +134,9 @@ return [
         'private_key' => env('QI_CARD_API_PRIVATE_KEY'),
         'public_key' => env('QI_CARD_API_PUBLIC_KEY'),
         'client_id' => env('QI_CARD_API_CLIENT_ID'),
+        'payment_product_code' => env('QI_CARD_PAYMENT_PRODUCT_CODE'),
+        'payment_webhook_url' => env('QI_CARD_PAYMENT_WEBHOOK_URL', null),
+        'payment_custom_webhook_url' => env('QI_CARD_PAYMENT_CUSTOM_WEBHOOK_URL', null),
     ],
 ];
 ```
@@ -133,6 +157,17 @@ When enabled (default: `false`), user avatars will be downloaded and stored in y
 
 #### `update_user_data_every_login`
 When enabled (default: `false`), user data (user_info, card_list, and access_token) will be updated every time a user logs in. When disabled, data is only stored on first registration.
+
+#### Payment Configuration Options
+
+##### `payment_product_code`
+Your Qi Card product code for payments. This is required when creating payments. Contact the Qi Card team to obtain your product code.
+
+##### `payment_webhook_url`
+The webhook URL where Qi Card will send payment status updates. If not set, defaults to the package's built-in webhook route (`/api/v1/qi-card/payments/webhook`).
+
+##### `payment_custom_webhook_url`
+An optional custom webhook URL where payment webhook data will be forwarded. This allows you to send payment updates to your own endpoint in addition to the package's webhook handler.
 
 ## Usage
 
@@ -245,6 +280,153 @@ $maskedCardNo = $user->first_card_masked_card_no; // Returns masked card number 
 | `first_card_account_number` | `string` or `null` | Account number of first card |
 | `first_card_masked_card_no` | `string` or `null` | Masked card number of first card |
 
+### Payment Processing
+
+The package provides comprehensive payment processing functionality with webhook support and polymorphic product relationships.
+
+#### Creating a Payment
+
+To create a payment, you need a product model (any Eloquent model) and a `QiCardUser`:
+
+```php
+use Ht3aa\QiCard\Facades\QiCard;
+use Ht3aa\QiCard\Models\QiCardUser;
+use App\Models\Order; // Your product model
+
+$user = QiCardUser::find($id);
+$order = Order::find($orderId);
+
+try {
+    $payment = QiCard::createPayment(
+        amount: 100.00, // Amount in IQD (will be converted to millis)
+        product: $order, // Any Eloquent model
+        orderDescription: 'Order #12345',
+        qiCardUser: $user
+    );
+    
+    // Redirect user to payment URL
+    return redirect($payment->redirect_url);
+    
+} catch (\Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException $e) {
+    // Handle error
+    return back()->withErrors(['payment' => 'Failed to create payment']);
+}
+```
+
+The `createPayment` method will:
+1. Generate a unique payment request ID
+2. Create a payment request with Qi Card API
+3. Store the payment in the database with status "PROCESSING"
+4. Return a `QiCardPayment` model with the redirect URL
+
+#### Working with QiCardPayment Model
+
+The `QiCardPayment` model provides access to payment information:
+
+```php
+use Ht3aa\QiCard\Models\QiCardPayment;
+use Ht3aa\QiCard\Enums\QiCardPaymentStatus;
+
+// Find a payment
+$payment = QiCardPayment::where('payment_request_id', $requestId)->first();
+
+// Access payment data
+$amount = $payment->amount;
+$status = $payment->status; // "SUCCESS", "FAIL", "PROCESSING", or "CANCELLED"
+$redirectUrl = $payment->redirect_url;
+$orderDescription = $payment->order_description;
+
+// Access the related user
+$user = $payment->qiCardUser; // Returns QiCardUser model
+
+// Access the polymorphic product
+$product = $payment->product; // Returns the related model (e.g., Order)
+```
+
+#### Payment Status Enum
+
+The package includes a `QiCardPaymentStatus` enum with the following values:
+
+```php
+use Ht3aa\QiCard\Enums\QiCardPaymentStatus;
+
+QiCardPaymentStatus::SUCCESS;      // Payment succeeded
+QiCardPaymentStatus::FAIL;         // Payment failed
+QiCardPaymentStatus::PROCESSING;   // Payment is being processed
+QiCardPaymentStatus::CANCELLED;    // Payment was cancelled
+```
+
+#### Payment Webhook
+
+The package includes a built-in webhook endpoint that handles payment status updates from Qi Card. The webhook route is automatically registered at:
+
+```
+POST /api/v1/qi-card/payments/webhook
+```
+
+The webhook handler will:
+1. Find the payment by `paymentRequestId`
+2. Update the payment status based on the webhook data
+3. Optionally forward the webhook data to your custom webhook URL (if configured)
+
+**Webhook Payload Example:**
+
+```json
+{
+    "paymentResult": {
+        "resultCode": "SUCCESS",
+        "resultMessage": "Success.",
+        "resultStatus": "S"
+    },
+    "paymentId": "20260101111212800100166820603167424",
+    "paymentRequestId": "23dcbc4f-d71c-4f70-b211-f089c00e8f70",
+    "extendInfo": "{\"sourcePlatform\":\"MINI_APP\"}",
+    "paymentTime": "2026-01-01T15:29:44+03:00",
+    "paymentAmount": {
+        "currency": "IQD",
+        "value": "1000"
+    },
+    "paymentCreateTime": "2026-01-01T15:27:53+03:00"
+}
+```
+
+**Important Notes:**
+- Make sure your webhook URL is publicly accessible
+- The webhook endpoint does not require authentication by default (you may want to add middleware)
+- If `payment_custom_webhook_url` is configured, the webhook data will be forwarded to that URL via HTTP POST
+
+#### Payment Flow Example
+
+Here's a complete example of handling a payment flow:
+
+```php
+use Ht3aa\QiCard\Facades\QiCard;
+use Ht3aa\QiCard\Models\QiCardUser;
+use App\Models\Order;
+
+// 1. Create payment
+$user = QiCardUser::where('wallet_id', $walletId)->first();
+$order = Order::create([...]);
+
+$payment = QiCard::createPayment(
+    amount: $order->total,
+    product: $order,
+    orderDescription: "Order #{$order->id}",
+    qiCardUser: $user
+);
+
+// 2. Redirect user to payment page
+return redirect($payment->redirect_url);
+
+// 3. Webhook will automatically update payment status
+// You can check payment status later:
+$payment->refresh();
+if ($payment->status === 'SUCCESS') {
+    // Payment successful, update order
+    $order->update(['status' => 'paid']);
+}
+```
+
 ### Sending Super Qi Notifications App
 
 The package provides a convenient way to send notifications to users' Qi Card inbox.
@@ -316,6 +498,21 @@ Creates or retrieves a Qi Card user using an authorization code.
 
 **Throws:** `UnprocessableEntityHttpException` if the request fails
 
+#### `QiCard::createPayment(string $amount, Model $product, string $orderDescription, QiCardUser $qiCardUser): QiCardPayment`
+Creates a payment request with Qi Card.
+
+**Parameters:**
+- `$amount` (string|float): Payment amount in IQD (will be converted to millis)
+- `$product` (Model): Any Eloquent model (polymorphic relationship)
+- `$orderDescription` (string): Description of the order
+- `$qiCardUser` (QiCardUser): The Qi Card user making the payment
+
+**Returns:** `QiCardPayment` model instance
+
+**Throws:** `UnprocessableEntityHttpException` if the request fails
+
+**Note:** Requires `payment_product_code` to be configured in your config file.
+
 #### `QiCard::sendSuperQiInboxNotification(string $accessToken, string $title, string $content, string $url = ''): array`
 Sends a notification to a user's Qi Card inbox.
 
@@ -341,6 +538,8 @@ Consult the Qi Card documentation to understand which scopes are available and h
 
 ## Database Schema
 
+### `qi_card_users` Table
+
 The `qi_card_users` table stores the following information:
 
 | Column | Type | Description |
@@ -350,6 +549,25 @@ The `qi_card_users` table stores the following information:
 | `user_info` | json | User information from Qi Card API |
 | `card_list` | json | List of user's cards (optional) |
 | `qi_card_access_token` | string | Access token for API calls |
+| `created_at` | timestamp | Record creation time |
+| `updated_at` | timestamp | Record last update time |
+
+### `qi_card_payments` Table
+
+The `qi_card_payments` table stores payment information:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | bigint | Primary key |
+| `payment_request_id` | string | Unique payment request identifier |
+| `payment_id` | string | Payment ID from Qi Card API (nullable) |
+| `amount` | decimal(15,2) | Payment amount |
+| `order_description` | text | Description of the order |
+| `redirect_url` | text | URL to redirect user for payment |
+| `product_type` | string | Polymorphic product type |
+| `product_id` | bigint | Polymorphic product ID |
+| `qi_card_user_id` | bigint | Foreign key to `qi_card_users` table |
+| `status` | string | Payment status (default: "PROCESSING") |
 | `created_at` | timestamp | Record creation time |
 | `updated_at` | timestamp | Record last update time |
 
