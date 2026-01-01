@@ -32,5 +32,6 @@ return [
         'client_id' => env('QI_CARD_API_CLIENT_ID'),
         'payment_product_code' => env('QI_CARD_PAYMENT_PRODUCT_CODE'),
         'payment_webhook_url' => env('QI_CARD_PAYMENT_WEBHOOK_URL', null),
+        'payment_custom_webhook_url' => env('QI_CARD_PAYMENT_CUSTOM_WEBHOOK_URL', null),
     ],
 ];

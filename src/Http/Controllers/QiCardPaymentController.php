@@ -4,6 +4,7 @@ namespace Ht3aa\QiCard\Http\Controllers;
 
 use Ht3aa\QiCard\Models\QiCardPayment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -33,8 +34,13 @@ class QiCardPaymentController
             throw new UnprocessableEntityHttpException('Payment not found');
         }
 
+        // send request to the custom webhook url
+        if (config('qi-card.api.payment_custom_webhook_url')) {
+            Http::post(config('qi-card.api.payment_custom_webhook_url'), $request->all());
+        }
+
         $payment->update([
-            'status' => $request->get('paymentResult')['resultStatus'],
+            'status' => $request->get('paymentResult')['resultCode'],
         ]);
     }
 }
