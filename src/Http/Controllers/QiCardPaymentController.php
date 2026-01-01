@@ -9,6 +9,6 @@ class QiCardPaymentController
 {
     public function webhook(Request $request)
     {
-        Log::error('qi card payment webhook received: ' . json_encode($request->all()));
+        Log::error('qi card payment webhook received: '.json_encode($request->all()));
     }
 }
