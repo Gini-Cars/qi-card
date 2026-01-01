@@ -30,5 +30,7 @@ return [
         'private_key' => env('QI_CARD_API_PRIVATE_KEY'),
         'public_key' => env('QI_CARD_API_PUBLIC_KEY'),
         'client_id' => env('QI_CARD_API_CLIENT_ID'),
+        'payment_product_code' => env('QI_CARD_PAYMENT_PRODUCT_CODE'),
+        'payment_webhook_url' => env('QI_CARD_PAYMENT_WEBHOOK_URL', null),
     ],
 ];

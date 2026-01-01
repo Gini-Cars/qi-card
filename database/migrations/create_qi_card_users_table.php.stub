@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
 
             // User data fields based on enabled scopes
-            $table->string('qi_card_id')->unique()->comment("user id or wallet id from qi card");
+            $table->string('wallet_id')->unique()->comment("user id or wallet id from qi card");
             $table->json('user_info')->nullable();
             $table->json('card_list')->nullable();
             $table->string('qi_card_access_token')->comment("usefull for notifications and other usage");

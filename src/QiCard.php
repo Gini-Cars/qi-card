@@ -4,6 +4,9 @@ namespace Ht3aa\QiCard;
 
 use Carbon\Carbon;
 use Exception;
+use Ht3aa\QiCard\Models\QiCardPayment;
+use Ht3aa\QiCard\Models\QiCardUser;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -39,7 +42,7 @@ class QiCard
         $response = $this->qiCardHttpRequest->replaceHeaders($headers)->post($url, $params)->json();
 
         if ($this->requestFailed($response)) {
-            Log::error('response failed: '.json_encode($response));
+            Log::error('response failed: ' . json_encode($response));
             throw new UnprocessableEntityHttpException('qi card response failed try again later');
         }
 
@@ -55,11 +58,11 @@ class QiCard
             $userInfo['avatar'] = $this->updateAvatarUrlToS3($userInfo['avatar']);
         }
 
-        $user = QiCardUser::where('qi_card_id', $userInfo['userId'])->first();
+        $user = QiCardUser::where('wallet_id', $userInfo['userId'])->first();
 
         if (! $user) {
             return QiCardUser::create([
-                'qi_card_id' => $userInfo['userId'],
+                'wallet_id' => $userInfo['userId'],
                 'qi_card_access_token' => $response['accessToken'],
                 'user_info' => $userInfo,
                 'card_list' => $cardList,
@@ -88,7 +91,7 @@ class QiCard
         $response = $this->qiCardHttpRequest->replaceHeaders($headers)->post($url, $params)->json();
 
         if (! isset($response['cardList']) || ! is_array($response['cardList']) || $this->requestFailed($response)) {
-            Log::error('fetch account numbers failed: '.json_encode($response));
+            Log::error('fetch account numbers failed: ' . json_encode($response));
             throw new UnprocessableEntityHttpException('Request failed try again later');
         }
 
@@ -106,11 +109,53 @@ class QiCard
         $response = $this->qiCardHttpRequest->replaceHeaders($headers)->post($url, $params)->json();
 
         if ($this->requestFailed($response)) {
-            Log::error('fetch user info failed: '.json_encode($response));
+            Log::error('fetch user info failed: ' . json_encode($response));
             throw new UnprocessableEntityHttpException('Request failed try again later');
         }
 
         return $response['userInfo'];
+    }
+
+    public function createPayment(string $amount, Model $product, string $orderDescription, QiCardUser $qiCardUser): QiCardPayment
+    {
+        $url = '/v1/payments/pay';
+        $params = [
+            'paymentExpiryTime' => now()->addHours(2)->toIso8601String(),
+            'productCode' => config('qi-card.api.payment_product_code'),
+            'paymentRequestId' => Str::uuid()->toString(),
+            'paymentAmount' => [
+                'currency' => 'IQD',
+                'value' => $amount * 1000,
+            ],
+            'order' => [
+                'orderDescription' => $orderDescription,
+                'buyer' => [
+                    'referenceBuyerId' => $qiCardUser->wallet_id,
+                ],
+            ],
+            'paymentExpiryTime' => now()->addHours(2)->toIso8601String(),
+            'paymentNotifyUrl' => config('qi-card.api.payment_webhook_url') ?? route('qi-card.payment.webhook'),
+        ];
+
+        $headers = $this->buildHeaders('POST', '/v1/payments/pay', $params);
+
+        $response = $this->qiCardHttpRequest->replaceHeaders($headers)->post($url, $params)->json();
+
+        if ($this->requestFailed($response)) {
+            Log::error('initiate payment failed: ' . json_encode($response));
+            throw new UnprocessableEntityHttpException('Request failed try again later');
+        }
+
+        return QiCardPayment::create([
+            'payment_request_id' => $params['paymentRequestId'],
+            'payment_id' => $response['paymentId'],
+            'redirect_url' => $response['redirectActionForm']['redirectUrl'],
+            'amount' => $amount,
+            'order_description' => $orderDescription,
+            'qi_card_user_id' => $qiCardUser->id,
+            'product_type' => $product::class,
+            'product_id' => $product->id,
+        ]);
     }
 
     public function sendSuperQiInboxNotification($accessToken, $title, $content, $url = '')
@@ -137,7 +182,7 @@ class QiCard
         $response = $this->qiCardHttpRequest->replaceHeaders($headers)->post($url, $params)->json();
 
         if ($this->requestFailed($response)) {
-            Log::error('send super qi notification failed: '.json_encode($response));
+            Log::error('send super qi notification failed: ' . json_encode($response));
             throw new UnprocessableEntityHttpException('Request failed try again later');
         }
 
@@ -150,7 +195,7 @@ class QiCard
             throw new Exception('Avatar url is not found in the user info of qi card information. please make sure you have added the USER_AVATAR scope in the mini app and enable the store_avatar_url_in_s3_storage option in the config file.');
         }
 
-        $fullPath = 'qi-card-user-avatars/'.Str::uuid()->toString().'.jpeg';
+        $fullPath = 'qi-card-user-avatars/' . Str::uuid()->toString() . '.jpeg';
 
         Storage::disk('s3')->put($fullPath, file_get_contents($avatarUrl));
 
@@ -193,14 +238,14 @@ class QiCard
             'Content-Type' => 'application/json; charset=UTF-8',
             'Client-Id' => $this->clientId,
             'Request-Time' => $currentTimestamp,
-            'Signature' => 'algorithm=RSA256, keyVersion=1, signature='.($signature),
+            'Signature' => 'algorithm=RSA256, keyVersion=1, signature=' . ($signature),
             'Accept' => 'application/json',
         ];
     }
 
     private function generateSignature(string $httpMethod, string $path, string $reqTime, string $content): string
     {
-        $signContent = $httpMethod.' '.$path."\n".$this->clientId.'.'.$reqTime.'.'.$content;
+        $signContent = $httpMethod . ' ' . $path . "\n" . $this->clientId . '.' . $reqTime . '.' . $content;
 
         openssl_sign($signContent, $signature, $this->privateKey, OPENSSL_ALGO_SHA256);
 

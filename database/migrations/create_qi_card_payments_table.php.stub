@@ -1,0 +1,31 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up()
+    {
+        Schema::create('qi_card_payments', function (Blueprint $table) {
+            $table->id();
+
+            $table->string('payment_request_id')->unique();
+            $table->string('payment_id')->nullable();
+            $table->decimal('amount', 15, 2);
+            $table->text('order_description');
+            $table->text('redirect_url');
+            $table->morphs('product');
+            $table->foreignId('qi_card_user_id')->constrained('qi_card_users')->cascadeOnDelete();
+            $table->string('status')->default("PROCESSING")->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down()
+    {
+        Schema::dropIfExists('qi_card_payments');
+    }
+};
+

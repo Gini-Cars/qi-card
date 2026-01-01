@@ -58,7 +58,7 @@ php artisan migrate
 
 The migration creates a table with the following structure:
 - `id`: Primary key
-- `qi_card_id`: Unique identifier for the Qi Card user
+- `wallted_id`: Unique identifier for the Qi Card user
 - `user_info`: JSON field storing user information
 - `card_list`: JSON field storing user card list (optional)
 - `qi_card_access_token`: Access token for API calls
@@ -182,7 +182,7 @@ The `QiCardUser` model provides access to user data through convenient accessors
 use Ht3aa\QiCard\QiCardUser;
 
 // Find a user
-$user = QiCardUser::where('qi_card_id', $qiCardId)->first();
+$user = QiCardUser::where('wallet_id', $qiCardId)->first();
 
 // Access raw data
 $userInfo = $user->user_info; // Array of user information
@@ -346,7 +346,7 @@ The `qi_card_users` table stores the following information:
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | bigint | Primary key |
-| `qi_card_id` | string | Unique Qi Card user identifier |
+| `wallet_id` | string | Unique Qi Card user identifier |
 | `user_info` | json | User information from Qi Card API |
 | `card_list` | json | List of user's cards (optional) |
 | `qi_card_access_token` | string | Access token for API calls |
