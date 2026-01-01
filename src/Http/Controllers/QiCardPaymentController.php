@@ -29,7 +29,7 @@ class QiCardPaymentController
     {
         $payment = QiCardPayment::where('payment_request_id', $request->get('paymentRequestId'))->first();
         if (! $payment) {
-            Log::error('qi card payment not found: ' . $request->paymentRequestId);
+            Log::error('qi card payment not found: '.$request->paymentRequestId);
             throw new UnprocessableEntityHttpException('Payment not found');
         }
 
