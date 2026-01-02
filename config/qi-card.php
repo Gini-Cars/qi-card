@@ -26,7 +26,7 @@ return [
      * You can change the configuration by setting the values in the .env file.
      */
     'api' => [
-        'base_url' => env('QI_CARD_API_BASE_URL'),
+        'base_url' => env('QI_CARD_API_BASE_URL', 'https://gateway.banqi.qi.iq'),
         'private_key' => env('QI_CARD_API_PRIVATE_KEY'),
         'public_key' => env('QI_CARD_API_PUBLIC_KEY'),
         'client_id' => env('QI_CARD_API_CLIENT_ID'),
